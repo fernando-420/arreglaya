@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -22,6 +24,7 @@ const _supabaseKey = String.fromEnvironment(
   'SUPABASE_ANON_KEY',
   defaultValue: 'sb_publishable_0risr9VRL7L51If9cdTPdg_fvOcVNET',
 );
+const _authRedirectUrl = 'io.arreglaya.app://login-callback';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseBackgroundHandler(RemoteMessage message) async {
@@ -201,6 +204,12 @@ class _AuthScreenState extends State<AuthScreen> {
         await auth.signUp(
           email: _email.text.trim(),
           password: _password.text,
+          emailRedirectTo:
+              !kIsWeb &&
+                  (defaultTargetPlatform == TargetPlatform.android ||
+                      defaultTargetPlatform == TargetPlatform.iOS)
+              ? _authRedirectUrl
+              : null,
           data: {
             'app': 'arreglaya',
             'full_name': _name.text.trim(),
@@ -212,7 +221,9 @@ class _AuthScreenState extends State<AuthScreen> {
           },
         );
         if (mounted && auth.currentSession == null) {
-          _notice('Revisa tu correo para confirmar tu cuenta.');
+          _notice(
+            'Revisa tu correo y abre el enlace de confirmación en este teléfono para volver a ArreglaYa.',
+          );
         }
       }
     } on AuthException catch (e) {

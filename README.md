@@ -29,6 +29,14 @@ El cuaderno editable adaptado se encuentra en `entregables/Actividad_02_ArreglaY
 
 ## Proyecto conectado
 
+### Confirmación del correo en Android e iOS
+
+La app solicita que los nuevos correos regresen a `io.arreglaya.app://login-callback`. Android e iOS registran ese enlace; Supabase Flutter recibe la sesión con `app_links`, sin el manejador de rutas de Flutter.
+
+**Configuración pendiente en el panel:** en Authentication → URL Configuration del proyecto `hjmckadneaynnnrrtith`, agregar exactamente `io.arreglaya.app://login-callback` a **Redirect URLs** y guardar. Conservar las otras direcciones y el Site URL del proyecto compartido. Si no se autoriza el enlace, Supabase puede volver al Site URL (actualmente el teléfono muestra `localhost`). Mantener activa la confirmación del correo.
+
+Instalar la APK actualizada antes de abrir un nuevo correo. Los correos anteriores conservan su enlace original. Si un enlace anterior ya confirmó la cuenta antes de fallar al abrir localhost, volver a la app e ingresar con el correo y la contraseña. Para probar el regreso automático hace falta un correo nuevo enviado desde la versión actualizada, con la dirección autorizada en el panel, y abrirlo en el mismo teléfono. Este recorrido todavía requiere comprobación en un dispositivo real; la compilación por sí sola no lo verifica.
+
 El inicio de sesión permite dos errores de correo o contraseña sin espera. Al tercer error consecutivo, deshabilita el botón durante 30 segundos con una cuenta regresiva. Un ingreso correcto o el fin de la espera reinicia el contador. Esta pausa es local a la pantalla; no sustituye los límites de Supabase y se reinicia al cerrar la app. Los errores de conexión y el límite de correos de confirmación no cuentan como contraseñas incorrectas. Las pruebas de interfaz comprueban los tres intentos y la recuperación después de la espera.
 
 La app utiliza por defecto el proyecto `hjmckadneaynnnrrtith` de la organización `ruta-chiquitana`. Su URL y clave pública están configuradas en `lib/main.dart`; se pueden reemplazar mediante `--dart-define`. La clave pública identifica el proyecto y no concede permisos de administrador.
