@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -115,7 +116,9 @@ class AuthGate extends StatelessWidget {
 }
 
 class AuthScreen extends StatefulWidget {
-  const AuthScreen({super.key});
+  const AuthScreen({super.key, this.signIn});
+
+  final Future<void> Function(String email, String password)? signIn;
   @override
   State<AuthScreen> createState() => _AuthScreenState();
 }
@@ -133,9 +136,37 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _loading = false;
   bool _hidePassword = true;
   String _role = 'cliente';
+  int _failedAttempts = 0;
+  DateTime? _lockedUntil;
+  Timer? _cooldownTimer;
+
+  int get _secondsRemaining {
+    final milliseconds =
+        _lockedUntil?.difference(DateTime.now()).inMilliseconds ?? 0;
+    return milliseconds > 0 ? (milliseconds / 1000).ceil() : 0;
+  }
+
+  void _startCooldown() {
+    _lockedUntil = DateTime.now().add(const Duration(seconds: 30));
+    _cooldownTimer?.cancel();
+    _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      setState(() {
+        if (_secondsRemaining == 0 || timer.tick >= 30) {
+          _failedAttempts = 0;
+          _lockedUntil = null;
+          timer.cancel();
+        }
+      });
+    });
+  }
 
   @override
   void dispose() {
+    _cooldownTimer?.cancel();
     _name.dispose();
     _email.dispose();
     _password.dispose();
@@ -147,16 +178,26 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Future<void> _submit() async {
+    if (_loading || (_login && _secondsRemaining > 0)) return;
+    if (_login && _lockedUntil != null) {
+      _failedAttempts = 0;
+      _lockedUntil = null;
+    }
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
     try {
-      final auth = Supabase.instance.client.auth;
       if (_login) {
-        await auth.signInWithPassword(
-          email: _email.text.trim(),
-          password: _password.text,
-        );
+        if (widget.signIn != null) {
+          await widget.signIn!(_email.text.trim(), _password.text);
+        } else {
+          await Supabase.instance.client.auth.signInWithPassword(
+            email: _email.text.trim(),
+            password: _password.text,
+          );
+        }
+        _failedAttempts = 0;
       } else {
+        final auth = Supabase.instance.client.auth;
         await auth.signUp(
           email: _email.text.trim(),
           password: _password.text,
@@ -175,7 +216,29 @@ class _AuthScreenState extends State<AuthScreen> {
         }
       }
     } on AuthException catch (e) {
-      _notice(e.message, error: true);
+      if (!mounted) return;
+      if (_login && e.code == 'invalid_credentials') {
+        _failedAttempts++;
+        if (_failedAttempts >= 3) {
+          _startCooldown();
+          _notice(
+            'Tres intentos fallidos. Espera 30 segundos para volver a ingresar.',
+            error: true,
+          );
+        } else {
+          _notice(
+            'Correo o contraseña incorrectos. Intentos restantes: ${3 - _failedAttempts}.',
+            error: true,
+          );
+        }
+      } else if (e.code == 'over_email_send_rate_limit') {
+        _notice(
+          'Se alcanzó el límite de correos de confirmación de Supabase. Intenta más tarde; este límite es distinto de la espera de 30 segundos.',
+          error: true,
+        );
+      } else {
+        _notice(e.message, error: true);
+      }
     } catch (_) {
       _notice('No se pudo conectar. Intenta nuevamente.', error: true);
     } finally {
@@ -183,13 +246,17 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 
-  void _notice(String message, {bool error = false}) =>
-      ScaffoldMessenger.of(context).showSnackBar(
+  void _notice(String message, {bool error = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
         SnackBar(
           content: Text(message),
           backgroundColor: error ? Colors.red.shade700 : null,
         ),
       );
+  }
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -360,7 +427,9 @@ class _AuthScreenState extends State<AuthScreen> {
                   ],
                   const SizedBox(height: 18),
                   FilledButton(
-                    onPressed: _loading ? null : _submit,
+                    onPressed: _loading || (_login && _secondsRemaining > 0)
+                        ? null
+                        : _submit,
                     child: Padding(
                       padding: const EdgeInsets.all(13),
                       child: _loading
@@ -372,7 +441,13 @@ class _AuthScreenState extends State<AuthScreen> {
                                 color: Colors.white,
                               ),
                             )
-                          : Text(_login ? 'Ingresar' : 'Crear cuenta'),
+                          : Text(
+                              _login
+                                  ? (_secondsRemaining > 0
+                                        ? 'Espera $_secondsRemaining s'
+                                        : 'Ingresar')
+                                  : 'Crear cuenta',
+                            ),
                     ),
                   ),
                   TextButton(

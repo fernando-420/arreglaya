@@ -29,6 +29,8 @@ El cuaderno editable adaptado se encuentra en `entregables/Actividad_02_ArreglaY
 
 ## Proyecto conectado
 
+El inicio de sesión permite dos errores de correo o contraseña sin espera. Al tercer error consecutivo, deshabilita el botón durante 30 segundos con una cuenta regresiva. Un ingreso correcto o el fin de la espera reinicia el contador. Esta pausa es local a la pantalla; no sustituye los límites de Supabase y se reinicia al cerrar la app. Los errores de conexión y el límite de correos de confirmación no cuentan como contraseñas incorrectas. Las pruebas de interfaz comprueban los tres intentos y la recuperación después de la espera.
+
 La app utiliza por defecto el proyecto `hjmckadneaynnnrrtith` de la organización `ruta-chiquitana`. Su URL y clave pública están configuradas en `lib/main.dart`; se pueden reemplazar mediante `--dart-define`. La clave pública identifica el proyecto y no concede permisos de administrador.
 
 Ejecuta `flutter run` para utilizar esta conexión. La base se instaló el 13 de noviembre de 2026 con `supabase/install_new_project.sql`, que ya incluye el esquema, las ampliaciones, los permisos, la aceptación de ofertas y Realtime. No vuelvas a ejecutar el esquema ni las migraciones sobre este proyecto: ya están aplicados.
