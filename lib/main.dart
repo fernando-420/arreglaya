@@ -18,11 +18,11 @@ import 'technician_profile.dart';
 
 const _supabaseUrl = String.fromEnvironment(
   'SUPABASE_URL',
-  defaultValue: 'https://hjmckadneaynnnrrtith.supabase.co',
+  defaultValue: 'https://prdzxcybmcxprzjsovuy.supabase.co',
 );
 const _supabaseKey = String.fromEnvironment(
   'SUPABASE_ANON_KEY',
-  defaultValue: 'sb_publishable_0risr9VRL7L51If9cdTPdg_fvOcVNET',
+  defaultValue: 'sb_publishable_1hBCuPZMicJRBQiSON3_2A_-x2_uOZu',
 );
 const _authRedirectUrl = 'io.arreglaya.app://login-callback';
 

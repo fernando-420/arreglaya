@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'clima_widgets.dart';
+import 'technician_contact_actions.dart';
+
 class TechnicianProfile extends StatefulWidget {
   const TechnicianProfile({
     super.key,
@@ -236,6 +239,16 @@ class _TechnicianProfileState extends State<TechnicianProfile> {
               label: 'Experiencia',
               value: '${profile['experience_years'] ?? 0} años',
             ),
+            const SizedBox(height: 16),
+            TechnicianWeatherCard(zone: profile['work_zone'] as String? ?? ''),
+            if (!widget.editable) ...[
+              const SizedBox(height: 12),
+              TechnicianContactActions(
+                phone: profile['phone'] as String?,
+                workZone: profile['work_zone'] as String? ?? '',
+                name: profile['full_name'] as String? ?? 'técnico',
+              ),
+            ],
             TechnicianReviews(technicianId: widget.technicianId),
             const SizedBox(height: 20),
             Text(

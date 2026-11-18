@@ -4,7 +4,7 @@ Aplicación Flutter que conecta clientes que necesitan una reparación con técn
 
 ## Equipo y actividad
 
-Actividad 02, Aplicaciones Móviles I, Universidad Privada Domingo Savio.
+Actividad 03: API REST, JSON, clima y servicios de contacto; Aplicaciones Móviles I, Universidad Privada Domingo Savio.
 
 - Fernando Adriel Montero Casanova
 - María Lizeth Marcelo Claros
@@ -21,9 +21,11 @@ El taller original utiliza ConectaCruz, un catálogo de negocios con consultas y
 
 ![Tablas verificadas en Supabase](supabase/installation-verified.png)
 
-Se comprobó mediante SQL el registro, la verificación, la aceptación de una oferta y los permisos. Los datos temporales se revirtieron al terminar. La prueba de la pantalla de configuración pasó y se compiló el APK Android de demostración.
+Se comprobó mediante SQL el registro, la verificación, la aceptación de una oferta y los permisos. Los datos temporales se revirtieron al terminar. La carga real del clima se verificó en un teléfono Android 15.
 
-Pendiente: capturas del flujo completo en un teléfono, informe PDF y video de los integrantes. Las notificaciones push todavía requieren el registro de dispositivos y el servicio de envío. No hay pagos integrados. Debe mejorarse la privacidad de las coordenadas exactas y la visibilidad de los teléfonos.
+La ficha pública del técnico ahora consulta el clima actual de su zona con Open-Meteo, muestra temperatura, sensación térmica, humedad y viento, y permite actualizar o reintentar la consulta. Incluye botones para llamar, escribir por WhatsApp y abrir indicaciones en Google Maps. La consulta HTTP tiene un límite de 10 segundos y mensajes de error para tiempo de espera, conexión, respuesta HTTP y JSON. El resultado se transforma con `Clima.fromJson`. Los teléfonos bolivianos de ocho dígitos se normalizan con el prefijo +591.
+
+En el teléfono físico, el 18/11/2026, Santa Cruz devolvió 31,6 °C, sensación de 33 °C, humedad del 62 %, viento de 29,1 km/h y cielo nublado. La captura está en `entregables/prueba_telefono_clima.png`. No se probaron llamada ni WhatsApp con un número real de técnico. Las notificaciones push todavía requieren el registro de dispositivos y el servicio de envío; no hay pagos integrados. Debe mejorarse la privacidad de las coordenadas exactas y la visibilidad de los teléfonos.
 
 El cuaderno editable adaptado se encuentra en `entregables/Actividad_02_ArreglaYa_Supabase.pptx`.
 
@@ -33,19 +35,32 @@ El cuaderno editable adaptado se encuentra en `entregables/Actividad_02_ArreglaY
 
 La app solicita que los nuevos correos regresen a `io.arreglaya.app://login-callback`. Android e iOS registran ese enlace; Supabase Flutter recibe la sesión con `app_links`, sin el manejador de rutas de Flutter.
 
-**Configuración pendiente en el panel:** en Authentication → URL Configuration del proyecto `hjmckadneaynnnrrtith`, agregar exactamente `io.arreglaya.app://login-callback` a **Redirect URLs** y guardar. Conservar las otras direcciones y el Site URL del proyecto compartido. Si no se autoriza el enlace, Supabase puede volver al Site URL (actualmente el teléfono muestra `localhost`). Mantener activa la confirmación del correo.
+La aplicación está configurada para el proyecto personal **arreglaya** (`prdzxcybmcxprzjsovuy`), dentro de la organización `fernando_Adriel`. En Authentication → URL Configuration se agregó `io.arreglaya.app://login-callback` a **Redirect URLs**. Se conservó el Site URL `http://localhost:3000` y la confirmación del correo debe permanecer activa. La base anterior Ruta Chiquitana (`hjmckadneaynnnrrtith`) es un proyecto separado; sus usuarios no se trasladan automáticamente.
 
 Instalar la APK actualizada antes de abrir un nuevo correo. Los correos anteriores conservan su enlace original. Si un enlace anterior ya confirmó la cuenta antes de fallar al abrir localhost, volver a la app e ingresar con el correo y la contraseña. Para probar el regreso automático hace falta un correo nuevo enviado desde la versión actualizada, con la dirección autorizada en el panel, y abrirlo en el mismo teléfono. Este recorrido todavía requiere comprobación en un dispositivo real; la compilación por sí sola no lo verifica.
 
 El inicio de sesión permite dos errores de correo o contraseña sin espera. Al tercer error consecutivo, deshabilita el botón durante 30 segundos con una cuenta regresiva. Un ingreso correcto o el fin de la espera reinicia el contador. Esta pausa es local a la pantalla; no sustituye los límites de Supabase y se reinicia al cerrar la app. Los errores de conexión y el límite de correos de confirmación no cuentan como contraseñas incorrectas. Las pruebas de interfaz comprueban los tres intentos y la recuperación después de la espera.
 
-La app utiliza por defecto el proyecto `hjmckadneaynnnrrtith` de la organización `ruta-chiquitana`. Su URL y clave pública están configuradas en `lib/main.dart`; se pueden reemplazar mediante `--dart-define`. La clave pública identifica el proyecto y no concede permisos de administrador.
+La URL y clave **publicable** del proyecto arreglaya están configuradas en `lib/main.dart`; se pueden reemplazar mediante `--dart-define`. La clave publicable se usa en la aplicación cliente y no concede permisos de administrador. Nunca pongas una clave secreta o `service_role` en Flutter.
 
-Ejecuta `flutter run` para utilizar esta conexión. La base se instaló el 13 de noviembre de 2026 con `supabase/install_new_project.sql`, que ya incluye el esquema, las ampliaciones, los permisos, la aceptación de ofertas y Realtime. No vuelvas a ejecutar el esquema ni las migraciones sobre este proyecto: ya están aplicados.
+La ampliación de esta base se aplicó mediante `supabase/upgrade_personal_project.sql`: crea el registro de imágenes faltante, mantiene RLS, refuerza permisos y añade funciones seguras de verificación/aceptación de ofertas y Realtime. La comprobación transaccional se ejecutó con `supabase/verify_installation.sql` y revirtió sus datos temporales. No vuelvas a ejecutar el esquema inicial sobre este proyecto existente.
 
 Se conservaron las tablas `recorridos` y `reservas`. El registro de ArreglaYa envía la marca `app: arreglaya`; solo esas cuentas generan un perfil de esta app. Las cuentas de la base anterior no se migraron: los usuarios deben registrarse de nuevo en este proyecto. No se asignó ningún administrador automáticamente.
 
 `supabase/verify_installation.sql` comprueba registro, verificación, aceptación y permisos con datos temporales dentro de una transacción que se revierte al terminar. No deja cuentas ni solicitudes de prueba guardadas.
+
+## Actividad 03: REST, JSON y servicios de contacto
+
+- `lib/clima_service.dart` consulta la API de geocodificación y el pronóstico actual de Open-Meteo para la zona de trabajo del técnico.
+- `lib/clima.dart` tipa la respuesta JSON con `Clima.fromJson` y traduce los códigos meteorológicos a descripciones en español.
+- `lib/clima_widgets.dart` muestra el clima en la ficha del técnico, con carga, errores y reintento.
+- `lib/technician_contact_actions.dart` implementa llamada, WhatsApp y ruta con `url_launcher`.
+- `android/app/src/main/AndroidManifest.xml` declara las consultas `tel:` y `geo:` necesarias en Android.
+- `test/clima_service_test.dart` comprueba el mapeo JSON, la búsqueda de zona y los errores HTTP.
+
+El endpoint y las variables actuales están documentados en [Open-Meteo](https://open-meteo.com/en/docs) y [su API de geocodificación](https://open-meteo.com/en/docs/geocoding-api). Las acciones externas utilizan [`url_launcher`](https://pub.dev/packages/url_launcher).
+
+Entregables: `entregables/Actividad_03_ArreglaYa_API.pptx`, `entregables/prueba_telefono_clima.png`, `entregables/Actividad_03_ArreglaYa_60s.mp4` y `entregables/ArreglaYa_Actividad3.apk`. El MP4 dura aproximadamente 60 segundos y no tiene narración. El PPTX descargable conserva las diapositivas como imágenes para mantener su diseño; el texto no es editable y la versión editable sigue en el espacio de la presentación. La APK es de depuración ARM64, no una compilación firmada para publicación en Play Store, y se mantiene local en `entregables/` por su tamaño.
 
 ## Configurar otro proyecto de Supabase
 
