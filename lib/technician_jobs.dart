@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'clima_card.dart';
 
 class TechnicianJobs extends StatelessWidget {
   const TechnicianJobs({super.key});
@@ -206,9 +207,14 @@ class _TechnicianServiceDetailState extends State<TechnicianServiceDetail> {
       return;
     }
     final uri = Uri.parse(
-      'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude',
+      'https://www.google.com/maps/dir/?api=1&destination=$latitude,$longitude',
     );
-    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    var opened = false;
+    try {
+      opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      opened = false;
+    }
     if (!opened && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No se pudo abrir el mapa.')),
@@ -216,16 +222,35 @@ class _TechnicianServiceDetailState extends State<TechnicianServiceDetail> {
     }
   }
 
-  Future<void> _openWhatsApp(BuildContext context, String phone) async {
-    final number = phone.replaceAll(RegExp(r'\D'), '');
+  Future<void> _call(BuildContext context, String phone) async {
+    final number = phone.replaceAll(RegExp(r'[^0-9+]'), '');
     if (number.isEmpty) return;
+    try {
+      final opened = await launchUrl(Uri(scheme: 'tel', path: number), mode: LaunchMode.externalApplication);
+      if (!opened && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No se pudo abrir el teléfono.')));
+      }
+    } catch (_) {
+      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No se pudo abrir el teléfono.')));
+    }
+  }
+
+  Future<void> _openWhatsApp(BuildContext context, String phone) async {
+    var number = phone.replaceAll(RegExp(r'\D'), '');
+    if (number.isEmpty) return;
+    if (number.length == 8) number = '591$number';
     final text = Uri.encodeComponent(
       'Hola, soy el técnico que aceptó tu solicitud en ArreglaYa. ¿Podemos coordinar el servicio?',
     );
-    final opened = await launchUrl(
-      Uri.parse('https://wa.me/$number?text=$text'),
-      mode: LaunchMode.externalApplication,
-    );
+    var opened = false;
+    try {
+      opened = await launchUrl(
+        Uri.parse('https://wa.me/$number?text=$text'),
+        mode: LaunchMode.externalApplication,
+      );
+    } catch (_) {
+      opened = false;
+    }
     if (!opened && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No se pudo abrir WhatsApp.')),
@@ -260,9 +285,15 @@ class _TechnicianServiceDetailState extends State<TechnicianServiceDetail> {
           FilledButton.icon(
             onPressed: () => _openMap(context),
             icon: const Icon(Icons.map_outlined),
-            label: const Text('Abrir ubicación del cliente'),
+            label: const Text('Cómo llegar'),
           ),
           const SizedBox(height: 12),
+          ClimaCard(
+            latitud: (request['latitude'] as num?)?.toDouble() ?? -17.7833,
+            longitud: (request['longitude'] as num?)?.toDouble() ?? -63.1821,
+            lugar: request['latitude'] != null && request['longitude'] != null
+                ? 'Ubicación del servicio' : 'Santa Cruz (referencia)',
+          ),
           if (stage == 'aceptada')
             FilledButton.icon(
               onPressed: _updatingStage
@@ -306,27 +337,28 @@ class _TechnicianServiceDetailState extends State<TechnicianServiceDetail> {
                 .eq('id', request['client_id'])
                 .single(),
             builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return const Text('No se pudieron cargar los datos del cliente.');
+              }
               if (!snapshot.hasData)
                 return const Padding(
                   padding: EdgeInsets.all(16),
                   child: LinearProgressIndicator(),
                 );
               final client = snapshot.data!;
-              return ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const CircleAvatar(child: Icon(Icons.person)),
-                title: Text(client['full_name'] as String),
-                subtitle: Text(
-                  client['phone'] as String? ?? 'Sin WhatsApp registrado',
-                ),
-                trailing: client['phone'] == null
-                    ? null
-                    : IconButton(
-                        icon: const Icon(Icons.chat_outlined),
-                        onPressed: () =>
-                            _openWhatsApp(context, client['phone'] as String),
-                      ),
-              );
+              final phone = (client['phone'] as String? ?? '').trim();
+              return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                ListTile(contentPadding: EdgeInsets.zero,
+                  leading: const CircleAvatar(child: Icon(Icons.person)),
+                  title: Text(client['full_name'] as String),
+                  subtitle: Text(phone.isEmpty ? 'Sin teléfono registrado' : phone)),
+                if (phone.isNotEmpty) Wrap(spacing: 8, children: [
+                  OutlinedButton.icon(onPressed: () => _call(context, phone),
+                    icon: const Icon(Icons.phone_outlined), label: const Text('Llamar')),
+                  OutlinedButton.icon(onPressed: () => _openWhatsApp(context, phone),
+                    icon: const Icon(Icons.chat_outlined), label: const Text('WhatsApp')),
+                ]),
+              ]);
             },
           ),
         ],
