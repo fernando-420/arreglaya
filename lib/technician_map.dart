@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class TechnicianMap extends StatefulWidget {
   const TechnicianMap({super.key});
@@ -154,6 +155,17 @@ class _TechnicianMapState extends State<TechnicianMap> {
                   ),
                 );
               }).toList(),
+            ),
+            RichAttributionWidget(
+              alignment: AttributionAlignment.bottomLeft,
+              attributions: [
+                TextSourceAttribution(
+                  'OpenStreetMap contributors',
+                  onTap: () => launchUrl(
+                    Uri.https('www.openstreetmap.org', '/copyright'),
+                  ),
+                ),
+              ],
             ),
           ],
         );

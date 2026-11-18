@@ -56,11 +56,13 @@ Se conservaron las tablas `recorridos` y `reservas`. El registro de ArreglaYa en
 - `lib/clima_widgets.dart` muestra el clima en la ficha del técnico, con carga, errores y reintento.
 - `lib/technician_contact_actions.dart` implementa llamada, WhatsApp y ruta con `url_launcher`.
 - `android/app/src/main/AndroidManifest.xml` declara las consultas `tel:` y `geo:` necesarias en Android.
-- `test/clima_service_test.dart` comprueba el mapeo JSON, la búsqueda de zona y los errores HTTP.
+- `test/clima_service_test.dart` comprueba el mapeo JSON, la búsqueda de zona y los errores HTTP y de tiempo de espera.
+- `test/clima_widgets_test.dart` comprueba que al actualizar sin conexión se quite el clima anterior y se muestre el error.
+- Las capturas 12-A y 12-B enviadas están en `entregables/evidencias/`.
 
 El endpoint y las variables actuales están documentados en [Open-Meteo](https://open-meteo.com/en/docs) y [su API de geocodificación](https://open-meteo.com/en/docs/geocoding-api). Las acciones externas utilizan [`url_launcher`](https://pub.dev/packages/url_launcher).
 
-Entregables: `entregables/Actividad_03_ArreglaYa_API.pptx`, `entregables/prueba_telefono_clima.png`, `entregables/Actividad_03_ArreglaYa_60s.mp4` y `entregables/ArreglaYa_Actividad3.apk`. El MP4 dura aproximadamente 60 segundos y no tiene narración. El PPTX descargable conserva las diapositivas como imágenes para mantener su diseño; el texto no es editable y la versión editable sigue en el espacio de la presentación. La APK es de depuración ARM64, no una compilación firmada para publicación en Play Store, y se mantiene local en `entregables/` por su tamaño.
+Entregables: `entregables/Actividad_03_ArreglaYa_API.pptx`, `entregables/prueba_telefono_clima.png`, `entregables/Actividad_03_ArreglaYa_60s.mp4` y `entregables/ArreglaYa_Actividad3.apk`. El MP4 dura aproximadamente 60 segundos y no tiene narración. El PPTX descargable conserva las diapositivas como imágenes para mantener su diseño; el texto no es editable y la versión editable sigue en el espacio de la presentación. La APK local es de depuración ARM64, versión `1.0.1+2002`, no una compilación firmada para publicación en Play Store, y se mantiene local en `entregables/` por su tamaño.
 
 ## Configurar otro proyecto de Supabase
 

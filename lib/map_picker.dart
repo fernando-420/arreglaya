@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class MapPicker extends StatefulWidget {
   const MapPicker({super.key, this.initialLocation});
@@ -93,6 +94,17 @@ class _MapPickerState extends State<MapPicker> {
                       Icons.location_on,
                       color: Colors.red,
                       size: 46,
+                    ),
+                  ),
+                ],
+              ),
+              RichAttributionWidget(
+                alignment: AttributionAlignment.bottomLeft,
+                attributions: [
+                  TextSourceAttribution(
+                    'OpenStreetMap contributors',
+                    onTap: () => launchUrl(
+                      Uri.https('www.openstreetmap.org', '/copyright'),
                     ),
                   ),
                 ],
